@@ -29,40 +29,29 @@ public class BST {
         }
     }
 
-    ;
+
 
     public int max(int left, int right) {
         return (left >= right) ? left : right;
     }
 
 
-/*=============================================*
- *                                             *
- *                AVL_Tree_Node                *
- *                                             *
- *=============================================*/
-
+// *=============================================*
+// *                                             *
+// *                AVL_Tree_Node                *
+// *                                             *
+// *=============================================*
 /*
- * AVL rotations and corrsponding help functions.
- */
-
-    /**
-     * Return the height of a node (sub tree).
-     */
     public int node_height(Node p) {
         return (p != null ? p.height : -1);
     }
 
-    /**
-     * Adjust the height for node p.
-     */
+
     public void calculate_height(Node p) {
         p.height = 1 + max(node_height(p.left), node_height(p.right));
     }
 
-    /**
-     * Single rotation left-to-right using node k2 as pivot.
-     */
+
     public void single_rotate_with_left_child(Node k2) {
         Node k1 = k2.left;
 
@@ -75,9 +64,7 @@ public class BST {
         k2 = k1;
     }
 
-    /**
-     * Single rotation right-to-left using node k1 as pivot.
-     */
+
     public void single_rotate_with_right_child(Node&k1) {
         Node k2 = k1.right;
 
@@ -90,21 +77,13 @@ public class BST {
         k1 = k2;
     }
 
-    /**
-     * Double rotation left-to-right using node k3 as pivot.
-     */
-    template<typename Comparable>
-    void
-    AVL_Tree_Node<Comparable>::
 
     double_rotate_with_left_child(Node&k3) {
         single_rotate_with_right_child(k3.left);
         single_rotate_with_left_child(k3);
     }
 
-    /**
-     * Double rotation right-to-left using node k3 as pivot.
-     */
+
     template<typename Comparable>
     void
     AVL_Tree_Node<Comparable>::
@@ -114,13 +93,7 @@ public class BST {
         single_rotate_with_right_child(k3);
     }
 
-/*
- * Member functions for AVL_Tree_Node
- */
 
-    /**
-     * Insert x in tree t as a new leaf. Check balance and adjust tree if needed.
-     */
     template<typename Comparable>
     void
     AVL_Tree_Node<Comparable>::
@@ -156,9 +129,7 @@ public class BST {
         }
     }
 
-    /**
-     * Remove x in tree t. Check balance and adjust tree if needed.
-     */
+
     template<typename Comparable>
     void
     AVL_Tree_Node<Comparable>::
@@ -227,10 +198,7 @@ public class BST {
     }
 
 
-    /**
-     * Look for x in the tree. If found, return av pointer to the node.
-     * Otherwise, return null.
-     */
+
     public Node find(const Comparable&x, const Node t) {
         if (t == null)
             return null;
@@ -242,13 +210,7 @@ public class BST {
             return t;
     }
 
-    /**
-     * Look for the smallest value (the leftmost node). Return pointer to that node.
-     * In case of empty tree, return null.
-     */
-    template<typename Comparable>
-    AVL_Tree_Node<Comparable>*
-    AVL_Tree_Node<Comparable>::
+
 
     find_min(const Node t) {
         if (t == null)
@@ -259,10 +221,7 @@ public class BST {
             return find_min(t.left);
     }
 
-    /**
-     * Look for the biggest value (the rightmost node). Return pointer to that node.
-     * In case of empty tree, return null.
-     */
+
     template<typename Comparable>
     AVL_Tree_Node<Comparable>*
     AVL_Tree_Node<Comparable>::
@@ -276,9 +235,7 @@ public class BST {
         return p;
     }
 
-    /**
-     * Remove all nodes in the tree.
-     */
+
     template<typename Comparable>
     void
     AVL_Tree_Node<Comparable>::
@@ -292,9 +249,7 @@ public class BST {
         }
     }
 
-    /**
-     * Make indent matching the current tree depth.
-     */
+
     template<typename Comparable>
     void
     AVL_Tree_Node<Comparable>::
@@ -306,15 +261,6 @@ public class BST {
 
 
 
-/*=============================================*
- *                                             *
- *                  AVL_Tree                   *
- *                                             *
- *=============================================*/
-
-    /**
-     * Insert x in the tree.
-     */
     template<typename Comparable>
     void
     AVL_Tree<Comparable>::
@@ -323,21 +269,14 @@ public class BST {
         Node::insert (x, root);
     }
 
-    /**
-     * Remove x from the tree.
-     */
-    template<typename Comparable>
     void
-    AVL_Tree<Comparable>::
 
-    remove(const Comparable&x) {
+    remove(Comparable x) {
         //throw AVL_Tree_error("remove: ska implementeras!");
         Node::remove (x, root);
     }
 
-    /**
-     * Check if tree contains x.
-     */
+
     template<typename Comparable>
     bool
     AVL_Tree<Comparable>::
@@ -349,9 +288,6 @@ public class BST {
     }
 
 
-    /**
-     * Look up value x in tree, return reference to that element.
-     */
     public Node find(Node x)
     {
         Node tmp = find (x, root);
@@ -362,9 +298,7 @@ public class BST {
         return tmp.element;
     }
 
-    /**
-     * Look up the smallest value in the tree, return reference to it.
-     */
+
     template<typename Comparable>
     Comparable&
     AVL_Tree<Comparable>::
@@ -378,9 +312,6 @@ public class BST {
         return Node::find_min (root).element;
     }
 
-    /**
-     * Look up the largest value in the tree, return reference to it.
-     */
     public Node find_max()
 
     {
@@ -390,21 +321,17 @@ public class BST {
         return find_max (root).element;
     }
 
-    /**
-     * Check if tree is empty.
-     */
+
     public boolean empty() {
         return root == null;
     }
 
-    /**
-     * Empty the tree.
-     */
+
     public void clear() {
         clear(root);
     }
 
-
+*/
 }
 
 
