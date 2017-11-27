@@ -17,6 +17,8 @@ import se.cygni.snake.client.BaseSnakeClient;
 import se.cygni.snake.client.MapCoordinate;
 import se.cygni.snake.client.MapUtil;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -147,25 +149,6 @@ private SnakeDirection path_chooser(MapUtil map) {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-    //Path finder
-    private SnakeDirection path_finder(MapUtil map){
-
-            MapCoordinate xy[];
-            xy = map.listCoordinatesContainingObstacle();
-            for (MapCoordinate coordinate : map.listCoordinatesContainingFood() ) {
-                STARS.add(coordinate);
-                if (coordinate.getManhattanDistanceTo(map.getMyPosition()) < 46){
-                    TARGET = coordinate;
-                    System.out.println(coordinate);
-                }
-            }
-
-
-        return path_chooser(map);
-   }
-
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///Today
     public int translate(MapCoordinate coord ){
@@ -177,6 +160,7 @@ private SnakeDirection path_chooser(MapUtil map) {
     public static final int MAX_SIZE = 200;
     public static int TAIL = 0;
     public static int HEAD = 0;
+    public static int SIZE = 0;
     public static boolean first_run = true;
     public enum Aim  { NE, SE, SW, NW};
     public static Aim aim = Aim.NE;
@@ -190,68 +174,72 @@ private SnakeDirection path_chooser(MapUtil map) {
         for ( int xy : mapUtil.translateCoordinates(mapUtil.getSnakeSpread(getPlayerId()))){
             System.out.print(mapUtil.translatePosition(xy));
         }
+        System.out.println();
+        System.out.println();
 
         MapCoordinate  coord = mapUtil.getMyPosition();
         int pos = translate(coord);
 
         int c = 0;
-            if (!first_run){
-                 pos = idxTOpos.get(TAIL);
-            }else first_run = false;
-
-            while (-20 < (TAIL - HEAD) && (TAIL - HEAD) < 20) {
-                boolean inserted = false;
-                int counter=0;
-                switch (aim) {
-                    case NE: c=1; break;
-                    case NW: c=2; break;
-                    case SE: c=3; break;
-                    case SW: c=4; break;
-                    default: c=4; break;
-                }
-
-                while (!inserted) {
-                    c = c % 4;
-                    int rst = pos;
-                    if (c == 0) {//UP
-                        pos += mapUpdateEvent.getMap().getWidth();
-                    } else if (c == 1) {//RIGHT
-                        pos += 1;
-                    } else if (c == 2) {//LEFT
-                        pos -= 1;
-                    } else {//DOWN
-                        pos -= mapUpdateEvent.getMap().getWidth();
-                    }
-                    if (counter == 4){ // No path found
-                        inserted = true; break;
-                    }
-                    else if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos))
-                            && !mapUtil.isCoordinateOutOfBounds(mapUtil.translatePosition(pos))
-                            && idxTOpos.get(TAIL-1) != pos ) {
-
-                        idxTOpos.put(TAIL, pos);
-                        posTOidx.put(pos, TAIL);
-                        TAIL = (TAIL % MAX_SIZE) + 1;
-                        inserted = true;
-                        System.out.println("Added in BST: "+ mapUtil.translatePosition(pos));
-                    } else {
-                        c++;
-                        pos = rst;
-                    }
-                    counter++;
-                }
+        if ( TAIL != HEAD ){
+            pos = idxTOpos.getOrDefault((TAIL), 0);
+        }
+        int inc = 0;
+        while ( inc < 5 ) {
+            boolean inserted = false;
+            int counter=0;
+            switch (aim) {
+                case NE: c=1; break;
+                case NW: c=2; break;
+                case SE: c=3; break;
+                case SW: c=4; break;
+                default: c=4; break;
             }
 
+            while (!inserted) {
+                c = c % 4;
+                int rst = pos;
+                if (c == 0) {//UP
+                    pos += mapUpdateEvent.getMap().getWidth();
+                } else if (c == 1) {//RIGHT
+                    pos += 1;
+                } else if (c == 2) {//LEFT
+                    pos -= 1;
+                } else {//DOWN
+                    pos -= mapUpdateEvent.getMap().getWidth();
+                }
+                if (counter == 4){ // No path found
+                    inserted = true; break;
+                }
+                else if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos))
+                        && !mapUtil.isCoordinateOutOfBounds(mapUtil.translatePosition(pos))
+                         && idxTOpos.getOrDefault((TAIL-1), 0 ) != pos ) {
+                    idxTOpos.put(TAIL, pos);
+                    posTOidx.put(pos, TAIL);
+                    TAIL = (TAIL % MAX_SIZE) + 1;
+                    SIZE += 1;
+                    inserted = true;
+                    System.out.println("Added in BST: "+ mapUtil.translatePosition(pos));
+                } else {
+                    c++;
+                    pos = rst;
+                }
+                counter++;
+                System.out.println(counter);
+            }
+            inc++;
+        }
 
         for (MapCoordinate coordinate :mapUtil.listCoordinatesContainingObstacle() ) {
-                if ( idxTOpos.get(posTOidx.get(translate(coordinate))) == translate(coordinate)  ){
+                if ( idxTOpos.getOrDefault((posTOidx.get(translate(coordinate))), 0) == translate(coordinate)  ){
                     System.out.println("WARNING: Obstacle in PATH");
                 }
         }
 
-        int next = idxTOpos.get(HEAD);
-            if ( next == posTOidx.get(next)){
+        int next = idxTOpos.getOrDefault((HEAD), 0);
+            if ( next == posTOidx.getOrDefault((next), 0) ){
                 HEAD = (HEAD % MAX_SIZE) + 1;
+                SIZE -= 1;
                 coord = (mapUtil.translatePosition(next));
                 System.out.println("Next move: " + coord);
             }
@@ -260,7 +248,7 @@ private SnakeDirection path_chooser(MapUtil map) {
             }
 
 
-        SnakeDirection chosenDirection = SnakeDirection.DOWN;//path_finder(mapUtil);
+        SnakeDirection chosenDirection = SnakeDirection.DOWN;
         if (coord.x - mapUtil.getMyPosition().x < 0)
             chosenDirection = SnakeDirection.LEFT;
         else if (coord.x - mapUtil.getMyPosition().x > 0)
