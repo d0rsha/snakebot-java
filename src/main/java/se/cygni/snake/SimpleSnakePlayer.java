@@ -6,10 +6,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.socket.WebSocketSession;
 import se.cygni.snake.api.event.*;
 import se.cygni.snake.api.exception.InvalidPlayerName;
-import se.cygni.snake.api.model.GameMode;
-import se.cygni.snake.api.model.GameSettings;
-import se.cygni.snake.api.model.PlayerPoints;
-import se.cygni.snake.api.model.SnakeDirection;
+import se.cygni.snake.api.model.*;
 import se.cygni.snake.api.response.PlayerRegistered;
 import se.cygni.snake.api.util.GameSettingsUtils;
 import se.cygni.snake.client.AnsiPrinter;
@@ -19,10 +16,8 @@ import se.cygni.snake.client.MapUtil;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.Map;
-import java.util.Random;
 
 public class SimpleSnakePlayer extends BaseSnakeClient {
 
@@ -170,10 +165,11 @@ private SnakeDirection path_chooser(MapUtil map) {
 
         // MapUtil contains lot's of useful methods for querying the map!
         MapUtil mapUtil = new MapUtil(mapUpdateEvent.getMap(), getPlayerId());
-        System.out.println("Snakespread: ");
+        /*System.out.println("Snakespread: ");
         for ( int xy : mapUtil.translateCoordinates(mapUtil.getSnakeSpread(getPlayerId()))){
             System.out.print(mapUtil.translatePosition(xy));
-        }
+        }*/
+        /*
         System.out.println();
         System.out.println();
 
@@ -185,7 +181,7 @@ private SnakeDirection path_chooser(MapUtil map) {
             pos = idxTOpos.getOrDefault((TAIL), 0);
         }
         int inc = 0;
-        while ( inc < 5 ) {
+        while ( SIZE < 15 ) {
             boolean inserted = false;
             int counter=0;
             switch (aim) {
@@ -195,8 +191,10 @@ private SnakeDirection path_chooser(MapUtil map) {
                 case SW: c=4; break;
                 default: c=4; break;
             }
+            System.out.println("WHILE ");
 
-            while (!inserted) {
+            while (!inserted) { inserted =true;
+
                 c = c % 4;
                 int rst = pos;
                 if (c == 0) {//UP
@@ -209,25 +207,27 @@ private SnakeDirection path_chooser(MapUtil map) {
                     pos -= mapUpdateEvent.getMap().getWidth();
                 }
                 if (counter == 4){ // No path found
+                    System.out.println("NO PATH FOUND");
                     inserted = true; break;
                 }
-                else if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos))
-                        && !mapUtil.isCoordinateOutOfBounds(mapUtil.translatePosition(pos))
-                         && idxTOpos.getOrDefault((TAIL-1), 0 ) != pos ) {
-                    idxTOpos.put(TAIL, pos);
-                    posTOidx.put(pos, TAIL);
-                    TAIL = (TAIL % MAX_SIZE) + 1;
-                    SIZE += 1;
-                    inserted = true;
-                    System.out.println("Added in BST: "+ mapUtil.translatePosition(pos));
-                } else {
+                else if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos))) {
+                    System.out.println("IM HERE");
+                    if ( idxTOpos.getOrDefault((TAIL-1), 0 ) != pos ) { //!mapUtil.isCoordinateOutOfBounds(mapUtil.translatePosition(pos))
+                        System.out.println("Added in BST: "+ mapUtil.translatePosition(pos));
+                        idxTOpos.put(TAIL, pos);
+                        posTOidx.put(pos, TAIL);
+                        TAIL = (TAIL % MAX_SIZE) + 1;
+                        SIZE += 1;
+                        inserted = true;
+                    }
+                }else {
                     c++;
                     pos = rst;
+                    System.out.println("FAILED");
                 }
                 counter++;
                 System.out.println(counter);
             }
-            inc++;
         }
 
         for (MapCoordinate coordinate :mapUtil.listCoordinatesContainingObstacle() ) {
@@ -256,8 +256,30 @@ private SnakeDirection path_chooser(MapUtil map) {
         else if (coord.y - mapUtil.getMyPosition().y < 0)
             chosenDirection = SnakeDirection.UP;
 
+        */
+        //ArrayList<MapCoordinate> targets = new ArrayList<MapCoordinate>();
+        int distance = 200;
+        int index = 0;
 
-
+        for (SnakeInfo snakeInfo : mapUpdateEvent.getMap().getSnakeInfos()) {
+            if (snakeInfo.getId() != getPlayerId() ){
+                for (int i : snakeInfo.getPositions()) {
+                    int d = mapUtil.translatePosition(i).getManhattanDistanceTo(mapUtil.getMyPosition());
+                    if ( d < distance){
+                        TARGET = mapUtil.translatePosition(i);
+                        distance = d;
+                    }
+                }
+            }
+        }
+        for ( MapCoordinate c : mapUtil.listCoordinatesContainingFood() ){
+            int d =c.getManhattanDistanceTo(mapUtil.getMyPosition());
+            if (d < distance){
+                TARGET = c;
+                distance = d;
+            }
+        }
+        SnakeDirection chosenDirection = path_chooser(mapUtil);
             // Register action here!
         registerMove(mapUpdateEvent.getGameTick(), chosenDirection);
     }
