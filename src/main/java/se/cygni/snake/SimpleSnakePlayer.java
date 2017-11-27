@@ -36,8 +36,8 @@ public class SimpleSnakePlayer extends BaseSnakeClient {
     private static final String SNAKE_NAME = "d0rshbot";
 
     // Set to false if you don't want the game world printed every game tick.
-    private static final boolean ANSI_PRINTER_ACTIVE = false;
-    private AnsiPrinter ansiPrinter = new AnsiPrinter(ANSI_PRINTER_ACTIVE, true);
+    private static final boolean ANSI_PRINTER_ACTIVE = true;
+    private AnsiPrinter ansiPrinter = new AnsiPrinter(ANSI_PRINTER_ACTIVE, false);
 
     public static void main(String[] args) {
         SimpleSnakePlayer simpleSnakePlayer = new SimpleSnakePlayer();
@@ -83,7 +83,9 @@ public class SimpleSnakePlayer extends BaseSnakeClient {
     private boolean target_locked = false;
     private MapCoordinate TARGET;
     private int distance = 46;
-
+    private static int SIZE_OF_BST = 0;
+    private static int HEAD_OF_BST = 0;
+    private static int TAIL_OF_BST = 0;
     private boolean first_run = true;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private SnakeDirection path_chooser(MapUtil map) {
@@ -175,45 +177,84 @@ private SnakeDirection path_chooser(MapUtil map) {
 
         // MapUtil contains lot's of useful methods for querying the map!
         MapUtil mapUtil = new MapUtil(mapUpdateEvent.getMap(), getPlayerId());
-        if (first_run){
+
             MapCoordinate  coord = mapUtil.getMyPosition();
 
-            Integer pos = coord.x*mapUpdateEvent.getMap().getWidth() + coord.y*mapUpdateEvent.getMap().getHeight();
+        int pos = coord.x + (coord.y)*mapUpdateEvent.getMap().getWidth();
 
-            while (bst.size < 5){
-                Random r = new Random();
-                int c = r.nextInt(3);
-               // System.out.print(" " + c);
-                if ( c == 0 ){
-                    pos += mapUpdateEvent.getMap().getWidth();
-                }
-                else if( c == 1 ){
-                    pos += 1;
-                }
-                else if (c == 2 ) {
-                    pos -= 1;
-                }
-                else {
-                    pos -= mapUpdateEvent.getMap().getWidth();
-                }
-                if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos)) ) {
-                    bst.insert(pos);
+        System.out.print("Snakespread: ");
+        for ( int xy : mapUtil.translateCoordinates(mapUtil.getSnakeSpread(getPlayerId()))){
+            System.out.println(mapUtil.translatePosition(xy));
+        }
+            /*
+            int posx = coord.x;
+            int posy = coord.y;
+            if (mapUtil.translatePosition(pos) != coord){
+                System.out.println("--------------------- ERRRRRRRRRRRRRRORRR -----------------");
+                System.out.println(pos);
+                System.out.print("x =" + posx + "  y=" + posy);
+                System.out.println("pos" + mapUtil.translatePosition(pos));
+                System.out.println("coord" + coord);
+                return;
+            }*/
+            int c = 0;
+            if (!first_run){
+                pos = bst.get_next(TAIL_OF_BST, pos);
+            }else first_run = false;
+
+            while (SIZE_OF_BST < 10) {
+                boolean inserted = false;
+                int counter=0;
+                while (!inserted) {
+                    //Random r = new Random();
+                    c = c % 4;//r.nextInt(3);
+                    int rst = pos;
+                    // System.out.print(" " + c);
+                    if (c == 0) {//UP
+                        pos += mapUpdateEvent.getMap().getWidth();
+                    } else if (c == 1) {//RIGHT
+                        pos += 1;
+                    } else if (c == 2) {//LEFT
+                        pos -= 1;
+                    } else {//DOWN
+                        pos -= mapUpdateEvent.getMap().getWidth();
+                    }
+                    if (counter == 4){ // No path found
+                        bst.insert(pos, TAIL_OF_BST++);
+                    }
+                    else if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos))
+                            && !mapUtil.isCoordinateOutOfBounds(mapUtil.translatePosition(pos))
+                            && !bst.find(pos) ) {
+                        SIZE_OF_BST++;
+                        bst.insert(pos, TAIL_OF_BST);
+                        TAIL_OF_BST = TAIL_OF_BST % 100 + 1;
+                        inserted = true;
+                        System.out.println("Added in BST: "+mapUtil.translatePosition(pos));
+                    } else {
+                        c++;
+                        pos = rst;
+                    }
+                    counter++;
                 }
             }
           //  bst.display(bst.root);
-            first_run=false;
-        }
 
-        int head = bst.get_head();
-        MapCoordinate coord = (mapUtil.translatePosition(head));
+        //}
+        pos = coord.x + (coord.y)*mapUpdateEvent.getMap().getWidth();
+        int next = bst.get_next(HEAD_OF_BST, pos);
+        HEAD_OF_BST = HEAD_OF_BST % 100 + 1;
+        bst.delete(next);
+        SIZE_OF_BST--;
 
-        SnakeDirection chosenDirection = SnakeDirection.UP;//path_finder(mapUtil);
+        coord = (mapUtil.translatePosition(next));
+        System.out.println("Next move: " + coord);
+        SnakeDirection chosenDirection = SnakeDirection.DOWN;//path_finder(mapUtil);
         if (coord.x - mapUtil.getMyPosition().x < 0)
             chosenDirection = SnakeDirection.LEFT;
         else if (coord.x - mapUtil.getMyPosition().x > 0)
             chosenDirection = SnakeDirection.RIGHT;
         else if (coord.y - mapUtil.getMyPosition().y < 0)
-            chosenDirection = SnakeDirection.DOWN;
+            chosenDirection = SnakeDirection.UP;
 
 
 

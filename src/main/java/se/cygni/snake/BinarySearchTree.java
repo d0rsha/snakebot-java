@@ -2,16 +2,8 @@ package se.cygni.snake;
 
 public class BinarySearchTree {
         public static  Node root;
-        public static int size;
-        public static int head;
-        public static int tail;
-        public static int MAX_SIZE;
         public BinarySearchTree(){
             this.root = null;
-            this.size = 0;
-            this.head = 0;
-            this.tail = 0;
-            this.MAX_SIZE = 1000;
         }
 
         public boolean find(int id){
@@ -27,6 +19,19 @@ public class BinarySearchTree {
             }
             return false;
         }
+    public Node get_node(int id){
+        Node current = root;
+        while(current!=null){
+            if(current.data==id){
+                return this.root;
+            }else if(current.data>id){
+                current = current.left;
+            }else{
+                current = current.right;
+            }
+        }
+        return null;
+    }
         public boolean delete(int id){
             Node parent = root;
             Node current = root;
@@ -87,7 +92,6 @@ public class BinarySearchTree {
                 }
                 successor.left = current.left;
             }
-            size--;
             return true;
         }
 
@@ -109,8 +113,7 @@ public class BinarySearchTree {
             }
             return successsor;
         }
-        public void insert(int id){
-            tail = (tail % MAX_SIZE) +1;
+        public void insert(int id, int tail){
             Node newNode = new Node(id,tail);
             if(root==null){
                 root = newNode;
@@ -124,19 +127,17 @@ public class BinarySearchTree {
                     current = current.left;
                     if(current==null){
                         parent.left = newNode;
-                        size++;
                         return;
                     }
                 }else if (id>current.data){
                     current = current.right;
                     if(current==null){
                         parent.right = newNode;
-                        size++;
                         return;
                     }
                 }
                 else{// Insättning finns redan
-
+                System.out.println("FEL I NODE:: Insättningen finns redan");
                 }
             }
         }
@@ -148,51 +149,27 @@ public class BinarySearchTree {
             }
         }
 
-        private int find_head(Node root){
-            if ( root == null )
-                return 0;
-            if ( root.idx == head )
-                return head;
-            int found = 0;
-            if (root.left != null){
-                found = find_head(root.left);
-            }
-            if ( found != 0 ){
-                return found;
-            }
-            else if (root.right != null){
-                found = find_head(root.right);
-            }
-            if ( found != 0 ){
-                return found;
-            }
-            return found;
-        }
 
-        public int get_head(){
-            if (root == null){
-                return -1;
+
+
+        public int get_next(int head, int myPos){
+            Node test = get_node(myPos+1);
+            if (test != null && head == test.idx ){
+                return test.data;
             }
-            return find_head(root);
-            /*
-            if (root.idx == head){
-                return root.data;
+            test = get_node(myPos+46);
+            if (test != null && head == test.idx ){
+                return test.data;
             }
-            int fail_if_zero = find_head(root.left);
-            if(fail_if_zero != 0){
-                delete((fail_if_zero));
-                head = (head  % MAX_SIZE) +1;
-                return fail_if_zero;
+            test = get_node(myPos -1);
+            if (test != null && head == test.idx ){
+                return test.data;
             }
-            fail_if_zero = find_head(root.right);
-            if (fail_if_zero != 0){
-                delete(fail_if_zero);
-                head = (head  % MAX_SIZE) +1;
-                return fail_if_zero;
+            test = get_node(myPos - 46);
+            if (test != null && head == test.idx ){
+                return test.data;
             }
-            //Failed to find value
-            return -1;
-*/
+            return 0;
         }
     // public static void main(String arg[]){}
 
