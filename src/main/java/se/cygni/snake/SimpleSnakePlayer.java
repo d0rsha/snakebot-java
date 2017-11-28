@@ -34,8 +34,8 @@ public class SimpleSnakePlayer extends BaseSnakeClient {
     private static final String SNAKE_NAME = "d0rshbot";
 
     // Set to false if you don't want the game world printed every game tick.
-    private static final boolean ANSI_PRINTER_ACTIVE = false;
-    private AnsiPrinter ansiPrinter = new AnsiPrinter(ANSI_PRINTER_ACTIVE, true);
+    private static final boolean ANSI_PRINTER_ACTIVE = true;
+    private AnsiPrinter ansiPrinter = new AnsiPrinter(ANSI_PRINTER_ACTIVE, false);
 
     public static void main(String[] args) {
         SimpleSnakePlayer simpleSnakePlayer = new SimpleSnakePlayer();
@@ -90,6 +90,10 @@ public static class ReverseIterating<T> implements Iterable<T> {
     private static SnakeDirection chosenDirection = SnakeDirection.RIGHT;
     private static BinarySearchTree path = new BinarySearchTree();
     private static BinarySearchTree NOK = new BinarySearchTree();
+    private static BinarySearchTree NOK2 = new BinarySearchTree();
+    private static int NOK_SIZE = 0;
+    private static BinarySearchTree TARGETS = new BinarySearchTree();
+    private static int T_IDX = 0;
     private static int counter = 0;
     private static int SIZE = 0;
     private MapCoordinate TARGET;
@@ -159,7 +163,18 @@ private SnakeDirection path_chooser(MapUtil map) {
     return chosenDirection;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+public boolean isTileAvailableForMovementTo(MapUtil mapUtil, MapCoordinate pos){
+    if (NOK.in_tree(translate(pos))){
+        System.out.println("Not good tile");
+        return false;
+    }
+    int p = translate(pos);
+    for (int i = 0; i < NOK_SIZE; i++) {
+        if (NOK.find(i) == p)
+            return false;
+    }
+    return mapUtil.isTileAvailableForMovementTo(pos);
+}
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///Today
     private int translate(MapCoordinate coord ){
@@ -175,69 +190,57 @@ private SnakeDirection path_chooser(MapUtil map) {
         while ( SIZE < max){
 
                 if (TARGET.x - coord.x > 0) {
-                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos+1)) && !path.find(pos+1) ){
+                    if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos+1)) && !path.in_tree(pos+1) ){
                         pos = pos+1;
-                        path.insert(pos);
+                        path.insert(pos, SIZE);
                     }
                     else if (TARGET.y - coord.y < 0) {
-                        if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos-WIDTH)) && !path.find(pos-WIDTH)  ){
+                        if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos-WIDTH)) && !path.in_tree(pos-WIDTH)  ){
                             pos = pos-WIDTH;
-                            path.insert(pos);
+                            path.insert(pos, SIZE);
                         }
                     } else {
-                        if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos+WIDTH)) && !path.find(pos+WIDTH)){
+                        if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos+WIDTH)) && !path.in_tree(pos+WIDTH)){
                             pos = (pos+WIDTH);
-                            path.insert(pos);
+                            path.insert(pos, SIZE);
                         }
                     }
                 }
                 // Try if to the LEFT
                 else if(TARGET.x - coord.x < 0) {
-                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos-1)) && !path.find(pos-1)){
+                    if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos-1)) && !path.in_tree(pos-1)){
                          pos = (pos-1);
                     }
                     else if (TARGET.y - coord.y > 0) {
-                        if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos+WIDTH)) && !path.find(pos+WIDTH)){
+                        if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos+WIDTH)) && !path.in_tree(pos+WIDTH)){
                             pos = (pos+WIDTH);
-                            path.insert(pos);
+                            path.insert(pos, SIZE);
                         }
                     } else {
-                        if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos-WIDTH)) && !path.find(pos-WIDTH)){
+                        if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos-WIDTH)) && !path.in_tree(pos-WIDTH)){
                             pos = (pos-WIDTH);
-                            path.insert(pos);
+                            path.insert(pos, SIZE);
                         }
                     }
                 }
                 // At the same x.Position
                 else {
                     if (TARGET.y - coord.y > 0) {
-                        if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos+WIDTH)) &&  !path.find(pos+WIDTH)){
+                        if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos+WIDTH)) &&  !path.in_tree(pos+WIDTH)){
                             pos =(pos+WIDTH);
-                            path.insert(pos);
+                            path.insert(pos, SIZE);
                         }
 
                     } else {
-                        if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos-WIDTH)) && !path.find(pos-WIDTH)){
+                        if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos-WIDTH)) && !path.in_tree(pos-WIDTH)){
                            pos =(pos-WIDTH);
-                            path.insert(pos);
+                            path.insert(pos, SIZE);
                         }
                         else{//CANNOT MOVE
                             System.out.println("RESET TAR: " + mapUtil.translatePosition(pos));
                             SIZE = 0;
                             path.clear(path.root);
-                            if (TARGET.y < 15 ){
-                                pos = pos + WIDTH*15;
-                                TARGET = mapUtil.translatePosition(pos);
-                            } else{
-                                pos = pos - WIDTH*15;
-                                TARGET = mapUtil.translatePosition(pos);
-                            }
-                            if (TARGET.x > 23){
-                                TARGET = mapUtil.translatePosition(pos - 20);
-                            } else{
-                                TARGET = mapUtil.translatePosition(pos + 20);
-                            }
-                            return TARGET;
+                            TARGET = mapUtil.translatePosition(TARGETS.find(--T_IDX));
                         }
 
                     }
@@ -272,6 +275,7 @@ private SnakeDirection path_chooser(MapUtil map) {
         System.out.println();
 
                 MYPOS   = mapUtil.getMyPosition();
+                int index = 0;
               for (SnakeInfo snakeInfo : mapUpdateEvent.getMap().getSnakeInfos()) {
                   if ((!snakeInfo.getId().equals(getPlayerId()) )
                           && snakeInfo.isAlive()) {
@@ -279,36 +283,46 @@ private SnakeDirection path_chooser(MapUtil map) {
                       int idx = 0;
                       for (int i : snakeInfo.getPositions()) {
                           int d = mapUtil.translatePosition(i).getManhattanDistanceTo(MYPOS);
-                          if (d < distance && idx == snakeInfo.getLength()-1 && snakeInfo.getTailProtectedForGameTicks() == 0) {
+                          if (d < distance && idx == snakeInfo.getLength() && snakeInfo.getTailProtectedForGameTicks() == 0) {
+                              TARGETS.insert(i, T_IDX++);
                               TARGET = mapUtil.translatePosition(i);
                               distance = d;
                           }
                           idx++;
                       }
-                      // Get Heads
-                      for (int i :snakeInfo.getPositions() )
-                      {
-                         NOK.insert(i);
-                          break;
+                      // Get Head + body
+                      for (int i :snakeInfo.getPositions() ) {
+                          NOK2.insert(NOK_SIZE, i);
+                          NOK.insert(i, NOK_SIZE++);
                       }
+                      NOK.delete(--NOK_SIZE);
                   }
+              }
+              for ( MapCoordinate item : mapUtil.getSnakeSpread(getPlayerId())){
+                  NOK2.insert(NOK_SIZE, translate(item));
+                  NOK.insert(translate(item), NOK_SIZE++);
               }
 
         for (MapCoordinate c : mapUtil.listCoordinatesContainingFood()) {
             int d = c.getManhattanDistanceTo(MYPOS);
-            if (d < distance) {
+            if (d < distance && !NOK2.in_tree(translate(c))) {
+                TARGETS.insert(translate(c), T_IDX++);
                 TARGET = c;
                 distance = d;
             }
         }
 
-        TARGET2 = fill_path(10, mapUtil);
+        TARGET2 = fill_path(15, mapUtil);
         SIZE--;
         chosenDirection = path_chooser(mapUtil);
             // Register action here!
         registerMove(mapUpdateEvent.getGameTick(), chosenDirection);
         counter++;
         NOK.clear(NOK.root );
+        NOK2.clear(NOK2.root);
+        TARGETS.clear(TARGETS.root );
+        T_IDX =0;
+        NOK_SIZE =0;
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

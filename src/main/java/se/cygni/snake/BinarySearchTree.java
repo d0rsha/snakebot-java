@@ -6,12 +6,12 @@ public class BinarySearchTree {
             this.root = null;
         }
 
-        public int find(int id){
+        public int find(int idx){
             Node current = root;
             while(current!=null){
-                if(current.data==id){
+                if(current.data==idx){
                     return current.idx;
-                }else if(current.data>id){
+                }else if(current.data>idx){
                     current = current.left;
                 }else{
                     current = current.right;
@@ -19,6 +19,21 @@ public class BinarySearchTree {
             }
             return 0;
         }
+    public boolean in_tree(int id){
+        Node current = root;
+        while(current!=null){
+            if(current.data==id){
+                return true;
+            }else if(current.data>id){
+                current = current.left;
+            }else{
+                current = current.right;
+            }
+        }
+        return false;
+    }
+
+
     public Node get_node(int id){
         Node current = root;
         while(current!=null){
@@ -129,15 +144,12 @@ public class BinarySearchTree {
                         parent.left = newNode;
                         return;
                     }
-                }else if (id>current.data){
+                }else{
                     current = current.right;
                     if(current==null){
                         parent.right = newNode;
                         return;
                     }
-                }
-                else{// Insättning finns redan
-                System.out.println("FEL I NODE:: Insättningen finns redan");
                 }
             }
         }
