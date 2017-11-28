@@ -164,7 +164,7 @@ private SnakeDirection path_chooser(MapUtil map) {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public boolean isTileAvailableForMovementTo(MapUtil mapUtil, MapCoordinate pos){
-    if (NOK.in_tree(translate(pos))){
+    if (NOK2.in_tree(translate(pos)) ){ // Dosen't check adjacent heads
         System.out.println("Not good tile");
         return false;
     }
@@ -174,6 +174,11 @@ public boolean isTileAvailableForMovementTo(MapUtil mapUtil, MapCoordinate pos){
             return false;
     }
     return mapUtil.isTileAvailableForMovementTo(pos);
+}
+
+public boolean recursive(BinarySearchTree tree){
+
+    return true;
 }
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///Today
@@ -188,74 +193,54 @@ public boolean isTileAvailableForMovementTo(MapUtil mapUtil, MapCoordinate pos){
         MapCoordinate coord = MYPOS;
 
         while ( SIZE < max){
+            List<SnakeDirection> directions = new ArrayList<>();
 
-                if (TARGET.x - coord.x > 0) {
-                    if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos+1)) && !path.in_tree(pos+1) ){
-                        pos = pos+1;
-                        path.insert(pos, SIZE);
+            // Let's see in which directions I can move
+            for(SnakeDirection direction :SnakeDirection.values()) {
+                if (mapUtil.canIMoveInDirection(direction)) {
+                    directions.add(direction);
+                }
+            }
+            boolean inserted =false;
+            while (!inserted) {
+                // Choose a random direction
+                Random r = new Random();
+                SnakeDirection chosenDirection = SnakeDirection.DOWN;
+
+                if (chosenDirection == SnakeDirection.LEFT) {
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path.in_tree(pos - 1)
+                            && !NOK2.in_tree(pos - 1)) {
+                        pos = pos - 1;
+                        path.insert(pos, SIZE++);inserted =true;
                     }
-                    else if (TARGET.y - coord.y < 0) {
-                        if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos-WIDTH)) && !path.in_tree(pos-WIDTH)  ){
-                            pos = pos-WIDTH;
-                            path.insert(pos, SIZE);
-                        }
-                    } else {
-                        if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos+WIDTH)) && !path.in_tree(pos+WIDTH)){
-                            pos = (pos+WIDTH);
-                            path.insert(pos, SIZE);
-                        }
+                } else if (chosenDirection == SnakeDirection.RIGHT) {
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path.in_tree(pos + 1)
+                            && !NOK2.in_tree(pos + 1)) {
+                        pos = pos + 1;
+                        path.insert(pos, SIZE++);inserted =true;
+                    }
+                } else if (chosenDirection == SnakeDirection.UP) {
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path.in_tree(pos - 46)
+                            && !NOK2.in_tree(pos - 46)) {
+                        pos = pos - 46;
+                        path.insert(pos, SIZE++);inserted =true;
+                    }
+                } else {
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path.in_tree(pos + 46)
+                            && !NOK2.in_tree(pos + 46)) {
+                        pos = pos + 46;
+                        path.insert(pos, SIZE++);inserted =true;
                     }
                 }
-                // Try if to the LEFT
-                else if(TARGET.x - coord.x < 0) {
-                    if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos-1)) && !path.in_tree(pos-1)){
-                         pos = (pos-1);
-                    }
-                    else if (TARGET.y - coord.y > 0) {
-                        if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos+WIDTH)) && !path.in_tree(pos+WIDTH)){
-                            pos = (pos+WIDTH);
-                            path.insert(pos, SIZE);
-                        }
-                    } else {
-                        if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos-WIDTH)) && !path.in_tree(pos-WIDTH)){
-                            pos = (pos-WIDTH);
-                            path.insert(pos, SIZE);
-                        }
-                    }
-                }
-                // At the same x.Position
-                else {
-                    if (TARGET.y - coord.y > 0) {
-                        if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos+WIDTH)) &&  !path.in_tree(pos+WIDTH)){
-                            pos =(pos+WIDTH);
-                            path.insert(pos, SIZE);
-                        }
-
-                    } else {
-                        if (isTileAvailableForMovementTo(mapUtil, mapUtil.translatePosition(pos-WIDTH)) && !path.in_tree(pos-WIDTH)){
-                           pos =(pos-WIDTH);
-                            path.insert(pos, SIZE);
-                        }
-                        else{//CANNOT MOVE
-                            System.out.println("RESET TAR: " + mapUtil.translatePosition(pos));
-                            SIZE = 0;
-                            path.clear(path.root);
-                            TARGET = mapUtil.translatePosition(TARGETS.find(--T_IDX));
-                        }
-
-                    }
-
-                }
-                if(cnt == 0){
+                if (cnt == 0) {
                     coord = mapUtil.translatePosition(pos);
                 }
-                System.out.println("insertED TAR: " + mapUtil.translatePosition(pos));
-
+            }
             cnt++;
             SIZE++;
         }
         return coord;
-    }
+    }//Fillpath done; Fixa NOKS/NOK2 arrayen
 
     public static int getElement(int[] arrayOfInts, int index) {
         return arrayOfInts[index];
@@ -267,7 +252,7 @@ public boolean isTileAvailableForMovementTo(MapUtil mapUtil, MapCoordinate pos){
         // MapUtil find lot's of useful methods for querying the map!
         MapUtil mapUtil = new MapUtil(mapUpdateEvent.getMap(), getPlayerId());
 
-        int distance = 200;
+        int distance = 10000;
         System.out.println("Snakespread: ");
         for ( int xy : mapUtil.translateCoordinates(mapUtil.getSnakeSpread(getPlayerId()))){
             System.out.print(mapUtil.translatePosition(xy)); break;
@@ -277,11 +262,10 @@ public boolean isTileAvailableForMovementTo(MapUtil mapUtil, MapCoordinate pos){
                 MYPOS   = mapUtil.getMyPosition();
                 int index = 0;
               for (SnakeInfo snakeInfo : mapUpdateEvent.getMap().getSnakeInfos()) {
-                  if ((!snakeInfo.getId().equals(getPlayerId()) )
-                          && snakeInfo.isAlive()) {
+                  if ( snakeInfo.isAlive() ) {
                     //  Get Tails
                       int idx = 0;
-                      for (int i : snakeInfo.getPositions()) {
+                      /*for (int i : snakeInfo.getPositions()) {
                           int d = mapUtil.translatePosition(i).getManhattanDistanceTo(MYPOS);
                           if (d < distance && idx == snakeInfo.getLength() && snakeInfo.getTailProtectedForGameTicks() == 0) {
                               TARGETS.insert(i, T_IDX++);
@@ -289,19 +273,23 @@ public boolean isTileAvailableForMovementTo(MapUtil mapUtil, MapCoordinate pos){
                               distance = d;
                           }
                           idx++;
-                      }
+                      }*/
                       // Get Head + body
+                      idx = 0;
                       for (int i :snakeInfo.getPositions() ) {
-                          NOK2.insert(NOK_SIZE, i);
-                          NOK.insert(i, NOK_SIZE++);
+                          if ( idx != snakeInfo.getLength()-1) {
+                              NOK2.insert(NOK_SIZE, i);
+                              NOK.insert(i, NOK_SIZE++);
+                          }
+                          idx++;
                       }
-                      NOK.delete(--NOK_SIZE);
                   }
               }
+              /*
               for ( MapCoordinate item : mapUtil.getSnakeSpread(getPlayerId())){
                   NOK2.insert(NOK_SIZE, translate(item));
                   NOK.insert(translate(item), NOK_SIZE++);
-              }
+              }*/
 
         for (MapCoordinate c : mapUtil.listCoordinatesContainingFood()) {
             int d = c.getManhattanDistanceTo(MYPOS);
