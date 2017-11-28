@@ -113,8 +113,8 @@ public class BinarySearchTree {
             }
             return successsor;
         }
-        public void insert(int id, int tail){
-            Node newNode = new Node(id,tail);
+        public void insert(int id){
+            Node newNode = new Node(id);
             if(root==null){
                 root = newNode;
                 return;
@@ -148,40 +148,25 @@ public class BinarySearchTree {
                 display(root.right);
             }
         }
-
-
-
-
-        public int get_next(int head, int myPos){
-            Node test = get_node(myPos+1);
-            if (test != null && head == test.idx ){
-                return test.data;
-            }
-            test = get_node(myPos+46);
-            if (test != null && head == test.idx ){
-                return test.data;
-            }
-            test = get_node(myPos -1);
-            if (test != null && head == test.idx ){
-                return test.data;
-            }
-            test = get_node(myPos - 46);
-            if (test != null && head == test.idx ){
-                return test.data;
-            }
-            return 0;
+    public void clear(Node node) {
+        if (node != null) {
+            clear( node.left );
+            clear( node.right );
+            node = null;
         }
+    }
+
+
+
     // public static void main(String arg[]){}
 
 
     class Node{
         int data;
-        int idx;
         Node left;
         Node right;
-        public Node(int data, int n){
+        public Node(int data){
             this.data = data;
-            this.idx = n;
             left = null;
             right = null;
         }
