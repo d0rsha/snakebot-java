@@ -89,6 +89,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
     //Variables
     private static SnakeDirection chosenDirection = SnakeDirection.RIGHT;
     private static BinarySearchTree path = new BinarySearchTree();
+    private static BinarySearchTree path2 = new BinarySearchTree();
     private static BinarySearchTree NOK = new BinarySearchTree();
     private static BinarySearchTree NOK2 = new BinarySearchTree();
     private static int NOK_SIZE = 0;
@@ -186,61 +187,105 @@ public boolean recursive(BinarySearchTree tree){
         return coord.x + (coord.y)*WIDTH;
     }
 
-    private MapCoordinate fill_path(int max, MapUtil mapUtil){
+    private boolean fill_path(int max, MapUtil mapUtil){
         int cnt = 0;
 
         int pos = translate(MYPOS);
         MapCoordinate coord = MYPOS;
 
-        while ( SIZE < max){
+        while ( pos != translate(TARGET) && SIZE < max ) {
             List<SnakeDirection> directions = new ArrayList<>();
-
             // Let's see in which directions I can move
-            for(SnakeDirection direction :SnakeDirection.values()) {
-                if (mapUtil.canIMoveInDirection(direction)) {
-                    directions.add(direction);
+            if (TARGET.x - coord.x < 0){
+                directions.add(SnakeDirection.RIGHT);
+                if (TARGET.y - coord.y < 0){
+                    directions.add(SnakeDirection.DOWN);
+                    directions.add(SnakeDirection.UP);
+                } else {
+                    directions.add(SnakeDirection.UP);
+                    directions.add(SnakeDirection.DOWN);
                 }
+                directions.add(SnakeDirection.LEFT);
             }
+            else{
+                directions.add(SnakeDirection.LEFT);
+                if (TARGET.y - coord.y > 0){
+                    directions.add(SnakeDirection.UP);
+                    directions.add(SnakeDirection.DOWN);
+                } else{
+                    directions.add(SnakeDirection.DOWN);
+                    directions.add(SnakeDirection.UP);
+                }
+                directions.add(SnakeDirection.RIGHT);
+            }
+
+
+
+
+            int idx =0;
             boolean inserted =false;
             while (!inserted) {
                 // Choose a random direction
-                Random r = new Random();
-                SnakeDirection chosenDirection = SnakeDirection.DOWN;
+               chosenDirection = directions.get(idx);
 
                 if (chosenDirection == SnakeDirection.LEFT) {
-                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path.in_tree(pos - 1)
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path2.in_tree(pos - 1)
                             && !NOK2.in_tree(pos - 1)) {
                         pos = pos - 1;
+                        path2.insert(SIZE, pos);
                         path.insert(pos, SIZE++);inserted =true;
                     }
                 } else if (chosenDirection == SnakeDirection.RIGHT) {
-                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path.in_tree(pos + 1)
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path2.in_tree(pos + 1)
                             && !NOK2.in_tree(pos + 1)) {
                         pos = pos + 1;
+                        path2.insert(SIZE, pos);
                         path.insert(pos, SIZE++);inserted =true;
                     }
                 } else if (chosenDirection == SnakeDirection.UP) {
-                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path.in_tree(pos - 46)
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path2.in_tree(pos - 46)
                             && !NOK2.in_tree(pos - 46)) {
                         pos = pos - 46;
+                        path2.insert(SIZE, pos);
                         path.insert(pos, SIZE++);inserted =true;
                     }
                 } else {
-                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path.in_tree(pos + 46)
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path2.in_tree(pos + 46)
                             && !NOK2.in_tree(pos + 46)) {
                         pos = pos + 46;
+                        path2.insert(SIZE, pos);
                         path.insert(pos, SIZE++);inserted =true;
                     }
                 }
-                if (cnt == 0) {
-                    coord = mapUtil.translatePosition(pos);
+                idx++;
+                if( idx == 4 ){
+                    NOK2.insert(NOK_SIZE, pos);
+                    NOK.insert(pos, NOK_SIZE++);
+                    path2.delete(path.find(SIZE));
+                    if (SIZE <= 0) {System.out.println("Pathfinder lead back to start"); return false;}
+                    path.delete(SIZE--);
                 }
+
             }
-            cnt++;
-            SIZE++;
+            coord   = mapUtil.translatePosition(pos);
         }
-        return coord;
+        return true;
     }//Fillpath done; Fixa NOKS/NOK2 arrayen
+
+    public SnakeDirection getChosenDirection(MapUtil mapUtil, MapCoordinate pos) {
+        if ( pos.x - MYPOS.x == 1 )
+            return SnakeDirection.RIGHT;
+        else if ( pos.x - MYPOS.x == -1)
+            return SnakeDirection.LEFT;
+        else if ( pos.y - MYPOS.y == -1)
+            return SnakeDirection.UP;
+        else if ( pos.x - MYPOS.x == 1)
+            return SnakeDirection.DOWN;
+        else{
+            System.out.println("Final chosen direction is wrong");
+        }
+        return SnakeDirection.DOWN;
+    }
 
     public static int getElement(int[] arrayOfInts, int index) {
         return arrayOfInts[index];
@@ -274,7 +319,7 @@ public boolean recursive(BinarySearchTree tree){
                           }
                           idx++;
                       }*/
-                      // Get Head + body
+                      // Get Head + body OF ALL SNAKES alive inc player
                       idx = 0;
                       for (int i :snakeInfo.getPositions() ) {
                           if ( idx != snakeInfo.getLength()-1) {
@@ -299,10 +344,15 @@ public boolean recursive(BinarySearchTree tree){
                 distance = d;
             }
         }
+        int idx =0;
+        while ( idx < T_IDX ){
+            if (fill_path(15, mapUtil)) {
+                break;
+            }
+            idx++;
+        }
+        chosenDirection = getChosenDirection(mapUtil, mapUtil.translatePosition(path.find(0)));
 
-        TARGET2 = fill_path(15, mapUtil);
-        SIZE--;
-        chosenDirection = path_chooser(mapUtil);
             // Register action here!
         registerMove(mapUpdateEvent.getGameTick(), chosenDirection);
         counter++;
@@ -311,6 +361,7 @@ public boolean recursive(BinarySearchTree tree){
         TARGETS.clear(TARGETS.root );
         T_IDX =0;
         NOK_SIZE =0;
+        SIZE =0;
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
