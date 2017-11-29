@@ -116,9 +116,38 @@ public static class ReverseIterating<T> implements Iterable<T> {
 
 
 
-    public List<SnakeDirection> move_to_target(MapCoordinate tar, MapCoordinate coord){
+    public List<SnakeDirection> move_to_target(MapCoordinate tar, MapCoordinate pos, SnakeDirection come_from) {
         List<SnakeDirection> directions = new ArrayList<>();
+            if (counter % 5 != 0){
+                if (tar.x - pos.x < 0) {
+                    directions.add(SnakeDirection.LEFT);
+                    directions.add(SnakeDirection.RIGHT);
+                }
+                else {
+                    directions.add(SnakeDirection.RIGHT);
+                    directions.add(SnakeDirection.LEFT);
+                }
+            }else {
+                if (tar.y - pos.y < 0)
+                    directions.add(SnakeDirection.UP);
+                else
+                    directions.add(SnakeDirection.DOWN);
+                if (tar.x - pos.x < 0)
+                    directions.add(SnakeDirection.LEFT);
+                else
+                    directions.add(SnakeDirection.RIGHT);
+            }
+        // Let's see in which directions I can move
+        for(SnakeDirection direction :SnakeDirection.values()) {
+            if (!directions.contains(direction)) {
+                directions.add(direction);
+            }
+        }
+        directions.remove(come_from);
+            return directions;
+    }
         // I vilken ordning skall det kontrolleras, nu x-axis
+/*
         if ( counter %2 == 0){//Math.abs(tar.x -coord.x) < Math.abs(tar.y - coord.y) ) {
             if (tar.x - coord.x < 0) {
                 directions.add(SnakeDirection.RIGHT);
@@ -166,7 +195,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
             }
         }
         return directions;
-    }
+    }*/
 
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,9 +204,15 @@ public static class ReverseIterating<T> implements Iterable<T> {
         return coord.x + (coord.y)*WIDTH;
     }
 
-    private int get_path_length(int max, MapUtil mapUtil, SnakeDirection go_to, List<Integer> TARGETS){
-        BinarySearchTree path = new BinarySearchTree();
+    private int get_path_length(int max, MapUtil mapUtil, SnakeDirection go_to, List<Integer> TARGETS, BinarySearchTree takenTiles){
+        BinarySearchTree path = takenTiles;
         path.insert(translate(TAIL), translate(TAIL));
+
+        // MER SKIT
+        for ( MapCoordinate item : mapUtil.getSnakeSpread(getPlayerId()))
+            path.insert(translate(item), translate(item));
+
+
         int pos = translate(HEAD);
         int length =0;
         ListIterator tarIterator = TARGETS.listIterator();
@@ -201,7 +236,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
             MapCoordinate coord = mapUtil.translatePosition(pos);
             System.out.println("Imag path:" + coord);
             // Kolla så att det är exakt tre val som kommer i List
-            List<SnakeDirection> directions = move_to_target(TARGET, coord);
+            List<SnakeDirection> directions = move_to_target(TARGET, coord, go_to);
             ListIterator listIterator = directions.listIterator();
             boolean inserted =false;
             while (!inserted) {
@@ -257,7 +292,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
                     int insert = it[snakeInfo.getLength()-1];
                     if (insert != translate(TAIL)) {
                         int d = mapUtil.translatePosition(insert).getManhattanDistanceTo(HEAD);
-                        if (d < distance) {
+                        if (d < distance && Math.abs(mapUtil.translatePosition(insert).x - HEAD.x ) > 10) {
                             TARGETS.add(0, insert);
                             distance = d;
                         } else
@@ -268,18 +303,24 @@ public static class ReverseIterating<T> implements Iterable<T> {
                 }
             }
         }
-
+        //SUper mega jätte MYCKET info
+        BinarySearchTree takenTiles = new BinarySearchTree();
+        for (SnakeInfo snakeInfo : mapUpdateEvent.getMap().getSnakeInfos()) {
+            for (int item : snakeInfo.getPositions())
+                takenTiles.insert(item,item);
+        }
 
         for (MapCoordinate c : mapUtil.listCoordinatesContainingFood()) {
             if (mapUtil.isTileAvailableForMovementTo(c)) {
                 //System.out.println("TARGETS.addFood     ( " + c);
                 int d = c.getManhattanDistanceTo(HEAD);
                 if ( d < distance ){
-                    TARGETS.add(2, translate(c));
+                    TARGETS.add(0, translate(c));
                     distance = d;
                 }
                 else
                     TARGETS.add(TARGETS.size()-1, translate(c));
+                takenTiles.insert(translate(c), translate(c));
             }
         }
         SnakeDirection chosenDirection = SnakeDirection.RIGHT;
@@ -293,7 +334,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
             int max = 0;
             for (SnakeDirection tmp_dir : directions )
             {
-                int length = get_path_length(27, mapUtil, tmp_dir, TARGETS);
+                int length = get_path_length(27, mapUtil, tmp_dir, TARGETS, takenTiles);
                 if ( length > max){
                     chosenDirection = tmp_dir;
                 }
