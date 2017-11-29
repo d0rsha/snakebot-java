@@ -2,8 +2,10 @@ package se.cygni.snake;
 
 public class BinarySearchTree {
         public Node root;
+        public int head;
         public BinarySearchTree(){
             this.root = null;
+            this.head =0;
         }
 
         public int find(int idx){
@@ -107,6 +109,7 @@ public class BinarySearchTree {
                 }
                 successor.left = current.left;
             }
+            head++;
             return true;
         }
 
