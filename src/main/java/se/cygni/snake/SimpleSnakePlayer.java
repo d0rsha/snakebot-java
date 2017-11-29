@@ -147,7 +147,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///Today
     public int translate(MapCoordinate coord ){
-        return coord.x + (coord.y)*WIDTH;
+        return coord.x + (coord.y)*46;
     }
 
     private int get_path_length(int max, MapUtil mapUtil, SnakeDirection go_to, List<Integer> TARGETS){
@@ -228,12 +228,11 @@ public static class ReverseIterating<T> implements Iterable<T> {
         // MapUtil find lot's of useful methods for querying the map!
         MapUtil mapUtil = new MapUtil(mapUpdateEvent.getMap(), getPlayerId());
         List<Integer> TARGETS = new ArrayList<>();
-       // WIDTH = mapUpdateEvent.getMap().getWidth();
 
         int distance = 10000;
 
         int[] it = mapUtil.translateCoordinates(mapUtil.getSnakeSpread(getPlayerId()));
-        System.out.print("SnakeHEAD: " + mapUtil.translatePosition(it[0]) );
+       // System.out.println("SnakeHEAD: " + mapUtil.translatePosition(it[0]) );
 
 
         MYPOS   = mapUtil.getMyPosition();
@@ -243,7 +242,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
                 int idx = 0;
                 if (snakeInfo.getId() != getPlayerId()) {
                     for (int i : snakeInfo.getPositions()) {
-                        if (idx == snakeInfo.getLength()-1) {
+                        if (idx == snakeInfo.getLength()-1 && snakeInfo.getTailProtectedForGameTicks() == 0) {
                             TARGETS.add(0, i);
                             //TARGET = mapUtil.translatePosition(i);
                             //System.out.println("TARGETS.addSnakeTail( " + TARGET);
