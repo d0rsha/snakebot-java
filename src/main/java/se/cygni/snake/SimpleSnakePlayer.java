@@ -102,47 +102,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
     private MapCoordinate MYPOS;
     private static final int WIDTH = 46;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-private SnakeDirection path_chooser(MapUtil map) {
-    // Move shortest path to TARGET
-    // Try if to the RIGHT
-    if (TARGET2.x - MYPOS.x > 0) {
-       // System.out.println("GO RIGHT?");
-        if (map.canIMoveInDirection(SnakeDirection.RIGHT))
-            return SnakeDirection.RIGHT;
-        if (TARGET2.y - MYPOS.y < 0) {
-            if (map.canIMoveInDirection(SnakeDirection.UP))
-                return SnakeDirection.UP;
-        } else {
-            if (map.canIMoveInDirection(SnakeDirection.DOWN))
-                return SnakeDirection.DOWN;
-        }
-    }
-    // Try if to the LEFT
-    else if(TARGET2.x - MYPOS.x < 0) {
-     //   System.out.println("GO LEFT?");
-        if (map.canIMoveInDirection(SnakeDirection.LEFT))
-            return SnakeDirection.LEFT;
-        if (TARGET2.y - MYPOS.y > 0) {
-            if (map.canIMoveInDirection(SnakeDirection.DOWN))
-                return SnakeDirection.DOWN;
-        } else {
-            if (map.canIMoveInDirection(SnakeDirection.UP))
-                return SnakeDirection.UP;
-        }
-    }
-    // At the same x.Position
-    else
-
-    {
-        if (TARGET2.y - MYPOS.y > 0) {
-            if (map.canIMoveInDirection(SnakeDirection.DOWN))
-                return SnakeDirection.DOWN;
-        } else {
-            if (map.canIMoveInDirection(SnakeDirection.UP))
-                return SnakeDirection.UP;
-        }
-    }
-    System.out.println("Choose by RANDOM");
+private SnakeDirection random_chooser(MapUtil map) {
     // Can't move directly to TARGET so let Random decide
     List<SnakeDirection> directions = new ArrayList<>();
 
@@ -193,7 +153,7 @@ public boolean recursive(BinarySearchTree tree){
         int pos = translate(MYPOS);
         MapCoordinate coord = MYPOS;
 
-        while ( pos != translate(TARGET) && SIZE < max ) {
+        while ( pos != translate(TARGET) || SIZE < max || TARGET.getManhattanDistanceTo(mapUtil.translatePosition(pos)) >1) {
             List<SnakeDirection> directions = new ArrayList<>();
             // Let's see in which directions I can move
             if (TARGET.x - coord.x < 0){
@@ -261,8 +221,8 @@ public boolean recursive(BinarySearchTree tree){
                 if( idx == 4 ){
                     NOK2.insert(NOK_SIZE, pos);
                     NOK.insert(pos, NOK_SIZE++);
-                    path2.delete(path.find(SIZE));
                     if (SIZE <= 0) {System.out.println("Pathfinder lead back to start"); return false;}
+                    path2.delete(path.find(SIZE));
                     path.delete(SIZE--);
                 }
 
@@ -270,26 +230,27 @@ public boolean recursive(BinarySearchTree tree){
             coord   = mapUtil.translatePosition(pos);
         }
         return true;
-    }//Fillpath done; Fixa NOKS/NOK2 arrayen
+    }
 
-    public SnakeDirection getChosenDirection(MapUtil mapUtil, MapCoordinate pos) {
-        if ( pos.x - MYPOS.x == 1 )
-            return SnakeDirection.RIGHT;
-        else if ( pos.x - MYPOS.x == -1)
-            return SnakeDirection.LEFT;
-        else if ( pos.y - MYPOS.y == -1)
-            return SnakeDirection.UP;
-        else if ( pos.x - MYPOS.x == 1)
-            return SnakeDirection.DOWN;
+    public SnakeDirection getChosenDirection(MapUtil map, MapCoordinate pos) {
+        if ( pos.x - MYPOS.x >= 1 )
+            chosenDirection = SnakeDirection.RIGHT;
+        else if ( pos.x - MYPOS.x <= -1)
+            chosenDirection = SnakeDirection.LEFT;
+        else if ( pos.y - MYPOS.y <= -1)
+            chosenDirection = SnakeDirection.UP;
+        else if ( pos.x - MYPOS.x >= 1)
+            chosenDirection = SnakeDirection.DOWN;
         else{
-            System.out.println("Final chosen direction is wrong");
+            System.out.println("Final chosen direction is wrong" );
         }
-        return SnakeDirection.DOWN;
+        if (!map.canIMoveInDirection(chosenDirection)) {
+            System.out.println("Cannot move in wished dir");
+            return random_chooser(map);
+        }
+        return chosenDirection;
     }
 
-    public static int getElement(int[] arrayOfInts, int index) {
-        return arrayOfInts[index];
-    }
     @Override
     public void onMapUpdate(MapUpdateEvent mapUpdateEvent) {
         ansiPrinter.printMap(mapUpdateEvent);
@@ -310,15 +271,16 @@ public boolean recursive(BinarySearchTree tree){
                   if ( snakeInfo.isAlive() ) {
                     //  Get Tails
                       int idx = 0;
-                      /*for (int i : snakeInfo.getPositions()) {
+                      for (int i : snakeInfo.getPositions()) {
                           int d = mapUtil.translatePosition(i).getManhattanDistanceTo(MYPOS);
-                          if (d < distance && idx == snakeInfo.getLength() && snakeInfo.getTailProtectedForGameTicks() == 0) {
+                          if (d < distance && idx == snakeInfo.getLength() ) {
                               TARGETS.insert(i, T_IDX++);
                               TARGET = mapUtil.translatePosition(i);
                               distance = d;
+                              System.out.println("new TARGET == " + TARGET);
                           }
                           idx++;
-                      }*/
+                      }
                       // Get Head + body OF ALL SNAKES alive inc player
                       idx = 0;
                       for (int i :snakeInfo.getPositions() ) {
@@ -330,11 +292,11 @@ public boolean recursive(BinarySearchTree tree){
                       }
                   }
               }
-              /*
-              for ( MapCoordinate item : mapUtil.getSnakeSpread(getPlayerId())){
-                  NOK2.insert(NOK_SIZE, translate(item));
-                  NOK.insert(translate(item), NOK_SIZE++);
-              }*/
+        for (MapCoordinate c : mapUtil.listCoordinatesContainingObstacle()) {
+            NOK2.insert(NOK_SIZE, translate(c));
+            NOK.insert(translate(c), NOK_SIZE++);
+        }
+
 
         for (MapCoordinate c : mapUtil.listCoordinatesContainingFood()) {
             int d = c.getManhattanDistanceTo(MYPOS);
@@ -342,16 +304,25 @@ public boolean recursive(BinarySearchTree tree){
                 TARGETS.insert(translate(c), T_IDX++);
                 TARGET = c;
                 distance = d;
+                System.out.println("new TARGET == " + TARGET);
             }
         }
         int idx =0;
         while ( idx < T_IDX ){
-            if (fill_path(15, mapUtil)) {
+            if (fill_path(25, mapUtil)) {
                 break;
             }
             idx++;
         }
-        chosenDirection = getChosenDirection(mapUtil, mapUtil.translatePosition(path.find(0)));
+        MapCoordinate fin_pos = mapUtil.translatePosition(path.find(0));
+        if (fin_pos.x == fin_pos.y && fin_pos.x == 0)
+            chosenDirection= random_chooser(mapUtil);
+        else {
+            System.out.println("Path == " + fin_pos);
+            chosenDirection = getChosenDirection(mapUtil, fin_pos);
+        }
+        if (!mapUtil.canIMoveInDirection(chosenDirection))
+            chosenDirection = random_chooser(mapUtil);
 
             // Register action here!
         registerMove(mapUpdateEvent.getGameTick(), chosenDirection);
@@ -362,6 +333,8 @@ public boolean recursive(BinarySearchTree tree){
         T_IDX =0;
         NOK_SIZE =0;
         SIZE =0;
+        path.clear(path.root);
+        path2.clear(path2.root);
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
