@@ -278,20 +278,21 @@ public boolean recursive(BinarySearchTree tree){
         TARGETS.clear(TARGETS.root);
                 MYPOS   = mapUtil.getMyPosition();
                 int index = 0;
-                /*FUNGERAR EJ :S
+                //FUNGERAR EJ :S
               for (SnakeInfo snakeInfo : mapUpdateEvent.getMap().getSnakeInfos()) {
                   if ( snakeInfo.isAlive() ) {
                     //  Get Tails
                       int idx = 0;
-
-                      for (int i : snakeInfo.getPositions()) {
-                          if ( idx == 0 ) {
-                              TARGETS.insert(i, T_IDX++);
-                              TARGET = mapUtil.translatePosition(i);
-                              System.out.println("TARGETS.addSnakeTail( " + TARGET);
-                          }
-                          idx++;
-                      }
+                    if (snakeInfo.getId() != getPlayerId()) {
+                        for (int i : snakeInfo.getPositions()) {
+                            if (idx == 0) {
+                                TARGETS.insert(i, T_IDX++);
+                                TARGET = mapUtil.translatePosition(i);
+                                System.out.println("TARGETS.addSnakeTail( " + TARGET);
+                            }
+                            idx++;
+                        }
+                    }
                       // Get Head + body OF ALL SNAKES alive inc player
                       idx = 0;
                       for (int i :snakeInfo.getPositions() ) {
@@ -302,20 +303,20 @@ public boolean recursive(BinarySearchTree tree){
                           idx++;
                       }
                   }
-              }*/
+              }
         // Insert Obstacles to NOK
-        /*
+
         for (MapCoordinate c : mapUtil.listCoordinatesContainingObstacle()) {
             NOK2.insert(NOK_SIZE, translate(c));
             NOK.insert(translate(c), NOK_SIZE++);
         }
 
-*/
+
         for (MapCoordinate c : mapUtil.listCoordinatesContainingFood()) {
             //int d = c.getManhattanDistanceTo(MYPOS);
             if (!NOK2.in_tree(translate(c))) {
-                TARGET = c;
-                System.out.println("TARGETS.addFood( " + translate(c));
+               // TARGET = c;
+                //System.out.println("TARGETS.addFood( " + translate(c));
                 TARGETS.insert(translate(c), T_IDX++);
 
 
@@ -328,14 +329,14 @@ public boolean recursive(BinarySearchTree tree){
         while ( 0 < T_IDX ){
             T_IDX = T_IDX-1;
             TARGET =  mapUtil.translatePosition(TARGETS.find(T_IDX));
-            System.out.println("Next in TARGETS == " + translate(TARGET));
+            System.out.println("Next in TARGETS == " + TARGET);
            if (fill_path(25, mapUtil)) {
                 break;
             }
 
             // Check time consumed
             long elapseTime = (System.nanoTime() - starTime) /1000000;
-            if (elapseTime > 250) {
+            if (elapseTime > 100) {
                 System.out.println("--GETTING TARGETS--TIME LIMIT EXCEDED");
                 while (true){}
             }
@@ -347,8 +348,8 @@ public boolean recursive(BinarySearchTree tree){
             System.out.println("Chosen path == " + fin_pos);
             chosenDirection = getChosenDirection(mapUtil, fin_pos);
         }
-        if (!mapUtil.canIMoveInDirection(chosenDirection))
-            chosenDirection = random_chooser(mapUtil);
+       // if (!mapUtil.canIMoveInDirection(chosenDirection))
+         //   chosenDirection = random_chooser(mapUtil);
 
             // Register action here!
         registerMove(mapUpdateEvent.getGameTick(), chosenDirection);

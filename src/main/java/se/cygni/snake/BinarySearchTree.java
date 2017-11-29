@@ -130,7 +130,7 @@ public class BinarySearchTree {
         }
         public void insert(int d, int idx){
             Node newNode = new Node(d, idx);
-             print(d);
+           //  print(d);
             if(root==null){
                 root = newNode;
                 return;
