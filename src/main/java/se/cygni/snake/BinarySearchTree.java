@@ -9,22 +9,22 @@ public class BinarySearchTree {
         public int find(int idx){
             Node current = root;
             while(current!=null){
-                if(current.data==idx){
-                    return current.idx;
-                }else if(current.data>idx){
+                if(current.index==idx){
+                    return current.data;
+                }else if(current.index>idx){
                     current = current.left;
                 }else{
                     current = current.right;
                 }
             }
-            return 0;
+            return 50000;
         }
-    public boolean in_tree(int id){
+    public boolean in_tree(int idx){
         Node current = root;
         while(current!=null){
-            if(current.data==id){
+            if(current.index == idx){
                 return true;
-            }else if(current.data>id){
+            }else if(current.index > idx){
                 current = current.left;
             }else{
                 current = current.right;
@@ -34,12 +34,12 @@ public class BinarySearchTree {
     }
 
 
-    public Node get_node(int id){
+    public Node get_node(int idx){
         Node current = root;
         while(current!=null){
-            if(current.data==id){
+            if(current.index==idx){
                 return this.root;
-            }else if(current.data>id){
+            }else if(current.index>idx){
                 current = current.left;
             }else{
                 current = current.right;
@@ -47,13 +47,13 @@ public class BinarySearchTree {
         }
         return null;
     }
-        public boolean delete(int id){
+        public boolean delete(int idx){
             Node parent = root;
             Node current = root;
             boolean isLeftChild = false;
-            while(current.data!=id){
+            while(current.index!=idx){
                 parent = current;
-                if(current.data>id){
+                if(current.index>idx){
                     isLeftChild = true;
                     current = current.left;
                 }else{
@@ -128,8 +128,8 @@ public class BinarySearchTree {
             }
             return successsor;
         }
-        public void insert(int id, int idx){
-            Node newNode = new Node(id, idx);
+        public void insert(int d, int idx){
+            Node newNode = new Node(d, idx);
             if(root==null){
                 root = newNode;
                 return;
@@ -138,7 +138,7 @@ public class BinarySearchTree {
             Node parent = null;
             while(true){
                 parent = current;
-                if(id<current.data){
+                if(idx < current.index){
                     current = current.left;
                     if(current==null){
                         parent.left = newNode;
@@ -156,7 +156,7 @@ public class BinarySearchTree {
         public void display(Node root){
             if(root!=null){
                 display(root.left);
-                System.out.print(" " + root.data);
+                System.out.println("x:" + root.data%46 +", y:" + root.data/46);
                 display(root.right);
             }
         }
@@ -174,13 +174,13 @@ public class BinarySearchTree {
 
 
     class Node{
+        int index;
         int data;
-        int idx;
         Node left;
         Node right;
         public Node(int data, int idx){
-            this.data = idx;
-            this.idx = data;
+            this.index = idx;
+            this.data = data;
             left = null;
             right = null;
         }

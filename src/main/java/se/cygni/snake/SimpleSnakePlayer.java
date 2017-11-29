@@ -93,7 +93,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
     private static BinarySearchTree NOK = new BinarySearchTree();
     private static BinarySearchTree NOK2 = new BinarySearchTree();
     private static int NOK_SIZE = 0;
-    private static BinarySearchTree TARGETS = new BinarySearchTree();
+
     private static int T_IDX = 0;
     private static int counter = 0;
     private static int SIZE = 0;
@@ -103,6 +103,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
     private static final int WIDTH = 46;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private SnakeDirection random_chooser(MapUtil map) {
+    System.out.println("MOVE TO RANDOM");
     // Can't move directly to TARGET so let Random decide
     List<SnakeDirection> directions = new ArrayList<>();
 
@@ -148,12 +149,13 @@ public boolean recursive(BinarySearchTree tree){
     }
 
     private boolean fill_path(int max, MapUtil mapUtil){
-        int cnt = 0;
 
+        long startTime = System.nanoTime();
         int pos = translate(MYPOS);
         MapCoordinate coord = MYPOS;
 
-        while ( pos != translate(TARGET) || SIZE < max || TARGET.getManhattanDistanceTo(mapUtil.translatePosition(pos)) >1) {
+//        while ( pos != translate(TARGET) || SIZE < max || TARGET.getManhattanDistanceTo(mapUtil.translatePosition(pos)) >1) {
+            while ( SIZE < max ) {
             List<SnakeDirection> directions = new ArrayList<>();
             // Let's see in which directions I can move
             if (TARGET.x - coord.x < 0){
@@ -185,6 +187,13 @@ public boolean recursive(BinarySearchTree tree){
             int idx =0;
             boolean inserted =false;
             while (!inserted) {
+                // Check time consumed
+                long elapsedTime = System.nanoTime() - startTime;
+                if ( elapsedTime > 15000000){
+                    System.out.println("---Calculating path---TIME LIMIT EXCEDED");
+                    while (true){}
+                }
+
                 // Choose a random direction
                chosenDirection = directions.get(idx);
 
@@ -218,7 +227,7 @@ public boolean recursive(BinarySearchTree tree){
                     }
                 }
                 idx++;
-                if( idx == 4 ){
+                if( idx >= 4 ){
                     NOK2.insert(NOK_SIZE, pos);
                     NOK.insert(pos, NOK_SIZE++);
                     if (SIZE <= 0) {System.out.println("Pathfinder lead back to start"); return false;}
@@ -228,6 +237,7 @@ public boolean recursive(BinarySearchTree tree){
 
             }
             coord   = mapUtil.translatePosition(pos);
+            System.out.println("path.add " + coord);
         }
         return true;
     }
@@ -258,40 +268,42 @@ public boolean recursive(BinarySearchTree tree){
         // MapUtil find lot's of useful methods for querying the map!
         MapUtil mapUtil = new MapUtil(mapUpdateEvent.getMap(), getPlayerId());
 
+        BinarySearchTree TARGETS = new BinarySearchTree();
+        long starTime = System.nanoTime();
         int distance = 10000;
         System.out.println("Snakespread: ");
         for ( int xy : mapUtil.translateCoordinates(mapUtil.getSnakeSpread(getPlayerId()))){
             System.out.print(mapUtil.translatePosition(xy)); break;
         }
-        System.out.println();
-
+        TARGETS.clear(TARGETS.root);
                 MYPOS   = mapUtil.getMyPosition();
                 int index = 0;
+                /*FUNGERAR EJ :S
               for (SnakeInfo snakeInfo : mapUpdateEvent.getMap().getSnakeInfos()) {
                   if ( snakeInfo.isAlive() ) {
                     //  Get Tails
                       int idx = 0;
+
                       for (int i : snakeInfo.getPositions()) {
-                          int d = mapUtil.translatePosition(i).getManhattanDistanceTo(MYPOS);
-                          if (d < distance && idx == snakeInfo.getLength() ) {
+                          if ( idx == 0 ) {
                               TARGETS.insert(i, T_IDX++);
                               TARGET = mapUtil.translatePosition(i);
-                              distance = d;
-                              System.out.println("new TARGET == " + TARGET);
+                              System.out.println("TARGETS.addSnakeTail( " + TARGET);
                           }
                           idx++;
                       }
                       // Get Head + body OF ALL SNAKES alive inc player
                       idx = 0;
                       for (int i :snakeInfo.getPositions() ) {
-                          if ( idx != snakeInfo.getLength()-1) {
+                          if ( idx != snakeInfo.getLength()) {
                               NOK2.insert(NOK_SIZE, i);
                               NOK.insert(i, NOK_SIZE++);
                           }
                           idx++;
                       }
                   }
-              }
+              }*/
+        // Insert Obstacles to NOK
         for (MapCoordinate c : mapUtil.listCoordinatesContainingObstacle()) {
             NOK2.insert(NOK_SIZE, translate(c));
             NOK.insert(translate(c), NOK_SIZE++);
@@ -299,26 +311,41 @@ public boolean recursive(BinarySearchTree tree){
 
 
         for (MapCoordinate c : mapUtil.listCoordinatesContainingFood()) {
-            int d = c.getManhattanDistanceTo(MYPOS);
-            if (d < distance && !NOK2.in_tree(translate(c))) {
-                TARGETS.insert(translate(c), T_IDX++);
+            //int d = c.getManhattanDistanceTo(MYPOS);
+            if (!NOK2.in_tree(translate(c))) {
+                System.out.println("T_IDX Before: " + T_IDX);
+                TARGETS.insert(T_IDX++, translate(c));
+
                 TARGET = c;
-                distance = d;
-                System.out.println("new TARGET == " + TARGET);
+               // distance = d;
+                System.out.println("TARGETS.addFood( " + TARGET);
             }
         }
         int idx =0;
-        while ( idx < T_IDX ){
+        TARGETS.display(TARGETS.root);
+        System.out.println();
+
+        while ( 0 < T_IDX ){
+            T_IDX = T_IDX-1;
+            System.out.println("T_IDX After: " + T_IDX);
+            TARGET =  mapUtil.translatePosition(TARGETS.find(T_IDX));
+            System.out.println("Next in TARGETS == " + TARGET);
             if (fill_path(25, mapUtil)) {
                 break;
             }
-            idx++;
+
+            // Check time consumed
+            long elapseTime = (System.nanoTime() - starTime) /1000000;
+            if (elapseTime > 250) {
+                System.out.println("--GETTING TARGETS--TIME LIMIT EXCEDED");
+                while (true){}
+            }
         }
         MapCoordinate fin_pos = mapUtil.translatePosition(path.find(0));
         if (fin_pos.x == fin_pos.y && fin_pos.x == 0)
             chosenDirection= random_chooser(mapUtil);
         else {
-            System.out.println("Path == " + fin_pos);
+            System.out.println("Chosen path == " + fin_pos);
             chosenDirection = getChosenDirection(mapUtil, fin_pos);
         }
         if (!mapUtil.canIMoveInDirection(chosenDirection))
