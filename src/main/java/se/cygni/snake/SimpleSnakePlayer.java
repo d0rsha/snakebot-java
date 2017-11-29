@@ -144,7 +144,7 @@ public boolean recursive(BinarySearchTree tree){
 }
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///Today
-    private int translate(MapCoordinate coord ){
+    public int translate(MapCoordinate coord ){
         return coord.x + (coord.y)*WIDTH;
     }
 
@@ -160,7 +160,7 @@ public boolean recursive(BinarySearchTree tree){
             // Let's see in which directions I can move
             if (TARGET.x - coord.x < 0){
                 directions.add(SnakeDirection.RIGHT);
-                if (TARGET.y - coord.y < 0){
+                if (TARGET.y - coord.y > 0){ //FLIP
                     directions.add(SnakeDirection.DOWN);
                     directions.add(SnakeDirection.UP);
                 } else {
@@ -171,7 +171,7 @@ public boolean recursive(BinarySearchTree tree){
             }
             else{
                 directions.add(SnakeDirection.LEFT);
-                if (TARGET.y - coord.y > 0){
+                if (TARGET.y - coord.y > 0){  //FLIP
                     directions.add(SnakeDirection.UP);
                     directions.add(SnakeDirection.DOWN);
                 } else{
@@ -304,33 +304,32 @@ public boolean recursive(BinarySearchTree tree){
                   }
               }*/
         // Insert Obstacles to NOK
+        /*
         for (MapCoordinate c : mapUtil.listCoordinatesContainingObstacle()) {
             NOK2.insert(NOK_SIZE, translate(c));
             NOK.insert(translate(c), NOK_SIZE++);
         }
 
-
+*/
         for (MapCoordinate c : mapUtil.listCoordinatesContainingFood()) {
             //int d = c.getManhattanDistanceTo(MYPOS);
             if (!NOK2.in_tree(translate(c))) {
-                System.out.println("T_IDX Before: " + T_IDX);
-                TARGETS.insert(T_IDX++, translate(c));
-
                 TARGET = c;
-               // distance = d;
-                System.out.println("TARGETS.addFood( " + TARGET);
+                System.out.println("TARGETS.addFood( " + translate(c));
+                TARGETS.insert(translate(c), T_IDX++);
+
+
             }
         }
         int idx =0;
-        TARGETS.display(TARGETS.root);
-        System.out.println();
+       // TARGETS.display(TARGETS.root);
+       // System.out.println();
 
         while ( 0 < T_IDX ){
             T_IDX = T_IDX-1;
-            System.out.println("T_IDX After: " + T_IDX);
             TARGET =  mapUtil.translatePosition(TARGETS.find(T_IDX));
-            System.out.println("Next in TARGETS == " + TARGET);
-            if (fill_path(25, mapUtil)) {
+            System.out.println("Next in TARGETS == " + translate(TARGET));
+           if (fill_path(25, mapUtil)) {
                 break;
             }
 

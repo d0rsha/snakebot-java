@@ -1,7 +1,7 @@
 package se.cygni.snake;
 
 public class BinarySearchTree {
-        public static  Node root;
+        public Node root;
         public BinarySearchTree(){
             this.root = null;
         }
@@ -130,6 +130,7 @@ public class BinarySearchTree {
         }
         public void insert(int d, int idx){
             Node newNode = new Node(d, idx);
+             print(d);
             if(root==null){
                 root = newNode;
                 return;
@@ -153,6 +154,10 @@ public class BinarySearchTree {
                 }
             }
         }
+
+    public void print(int data){
+            System.out.println("In BST inserted: " + data);
+    }
         public void display(Node root){
             if(root!=null){
                 display(root.left);
