@@ -141,7 +141,29 @@ public static class ReverseIterating<T> implements Iterable<T> {
         return directions;
     }
 
+    public void print_path (BinarySearchTree path, MapUtil mapUtil){
+        System.out.println("_____________________________________________________________________________________________________________________________________");
+            for (int i = 0; i < 33; i++) {
+                for (int j = 0; j <45 ; j++) {
 
+                    if (i*46 + j == translate(HEAD))
+                        System.out.print(" H ");
+                    else if (i*46 + j == translate(TAIL))
+                         System.out.print(" T ");
+                    else if (i*46 + j == translate(TARGET))
+                        System.out.print(" A ");
+                    else if (i*46 + j == path.find(i*46 + j))
+                        System.out.print(" P ");
+                    else if(mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(i*46 + j)))
+                        System.out.print(" - ");
+                    else
+                        System.out.print(" X ");
+
+                }
+                System.out.println();
+            }
+        System.out.println("______________________________________________________________________________________________________________________________________");
+    }
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///Today
@@ -180,7 +202,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
             ListIterator listIterator = directions.listIterator();
             boolean inserted =false;
             while (!inserted) {
-                if( !listIterator.hasNext() ){ return length; }
+                if( !listIterator.hasNext() ){ print_path(path, mapUtil);return length; }
                 SnakeDirection chosenDirection = directions.remove(listIterator.nextIndex());
                 if (chosenDirection == SnakeDirection.LEFT && coord.x >= 0) {
                     if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos - 1)) && !path.in_tree(pos - 1)) {
@@ -201,27 +223,8 @@ public static class ReverseIterating<T> implements Iterable<T> {
                 }
             }
             length++;
-/*
-            for (int i = 0; i < 33; i++) {
-                for (int j = 0; j <45 ; j++) {
-
-                    if (i*46 + j == translate(HEAD))
-                        System.out.print(" H ");
-                    else if (i*46 + j == translate(TAIL))
-                         System.out.print(" T ");
-                    else if (i*46 + j == translate(TARGET))
-                        System.out.print(" A ");
-                    else if (i*46 + j == path.find(i*46 + j))
-                        System.out.print(" P ");
-                    else if(mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(i*46 + j)))
-                        System.out.print(" - ");
-                    else
-                        System.out.print(" X ");
-
-                }
-                System.out.println();
-            }*/
         }
+        print_path(path, mapUtil);
         return length;
     }
 
