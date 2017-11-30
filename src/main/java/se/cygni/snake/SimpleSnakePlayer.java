@@ -33,7 +33,7 @@ public class SimpleSnakePlayer extends BaseSnakeClient {
     private static final String SNAKE_NAME = "d0rshbot";
 
     // Set to false if you don't want the game world printed every game tick.
-    private static final boolean ANSI_PRINTER_ACTIVE = true;
+    private static final boolean ANSI_PRINTER_ACTIVE = true ;
     private AnsiPrinter ansiPrinter = new AnsiPrinter(ANSI_PRINTER_ACTIVE, false);
 
     public static void main(String[] args) {
@@ -120,31 +120,56 @@ public static class ReverseIterating<T> implements Iterable<T> {
     public List<SnakeDirection> move_to_target(MapCoordinate tar, MapCoordinate pos, SnakeDirection come_from) {
        List<SnakeDirection> directions = new ArrayList<>();
                 if (come_from == SnakeDirection.LEFT) {
-                    directions.add(SnakeDirection.UP);
-                    directions.add(SnakeDirection.RIGHT);
-                    directions.add(SnakeDirection.DOWN);
+                    directions.add(0,SnakeDirection.UP);
+                    directions.add(1,SnakeDirection.RIGHT);
+                    directions.add(2,SnakeDirection.DOWN);
                 }else if (come_from == SnakeDirection.RIGHT) {
-                    directions.add(SnakeDirection.DOWN);
-                    directions.add(SnakeDirection.LEFT);
-                    directions.add(SnakeDirection.UP);
+                    directions.add(0,SnakeDirection.DOWN);
+                    directions.add(1,SnakeDirection.LEFT);
+                    directions.add(2,SnakeDirection.UP);
                 }
                 else if ( come_from == SnakeDirection.UP) {
-                    directions.add(SnakeDirection.RIGHT);
-                    directions.add(SnakeDirection.DOWN);
-                    directions.add(SnakeDirection.LEFT);
+                    directions.add(0,SnakeDirection.RIGHT);
+                    directions.add(1,SnakeDirection.DOWN);
+                    directions.add(2,SnakeDirection.LEFT);
                 }
                 else{
-                    directions.add(SnakeDirection.LEFT);
-                    directions.add(SnakeDirection.UP);
-                    directions.add(SnakeDirection.RIGHT);
+                    directions.add(0,SnakeDirection.LEFT);
+                    directions.add(1,SnakeDirection.UP);
+                    directions.add(2,SnakeDirection.RIGHT);
                 }
         return directions;
     }
 
+
+    private int path_chooser(MapUtil map, MapCoordinate MYPOS, SnakeDirection come_from) {
+        List<SnakeDirection> directions = new ArrayList<>();
+        // Move shortest path to TARGET
+        // Try if to the RIGHT
+        if (TARGET.x - MYPOS.x > 0) {
+            return 2;
+        }
+        // Try if to the LEFT
+        else if (TARGET.x - MYPOS.x < 0) {
+            return 0;
+        }
+        // At the same x.Position
+        else
+
+        {
+            if (TARGET.y - MYPOS.y > 0) {
+                return 3;
+            } else {
+                return 1;
+            }
+        }
+    }
+
+
     public void print_path (BinarySearchTree path, MapUtil mapUtil){
         System.out.println("_____________________________________________________________________________________________________________________________________");
-            for (int i = 0; i < 33; i++) {
-                for (int j = 0; j <45 ; j++) {
+            for (int i = 0; i <= 33; i++) {
+                for (int j = 0; j <= 45 ; j++) {
 
                     if (i*46 + j == translate(HEAD))
                         System.out.print(" H ");
@@ -163,6 +188,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
                 System.out.println();
             }
         System.out.println("______________________________________________________________________________________________________________________________________");
+
     }
 
    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,21 +197,22 @@ public static class ReverseIterating<T> implements Iterable<T> {
         return coord.x + (coord.y)*WIDTH;
     }
 
-    private int get_path_length(int max, MapUtil mapUtil, SnakeDirection go_to, List<Integer> TARGETS){
+    private int get_path_length(int max, MapUtil mapUtil, SnakeDirection go_to, List<Integer> TARGETS, BinarySearchTree heads){
         BinarySearchTree path = new BinarySearchTree();
         path.insert(translate(TAIL), translate(TAIL));
         int pos = translate(HEAD);
-        int length =0;
+        int lengt =0;
         ListIterator tarIterator = TARGETS.listIterator();
 
         int idx = 0;
+        int bonus =0;
         TARGET = mapUtil.translatePosition(TARGETS.get(idx++));
-        while ( length < max && idx < TARGETS.size() ) {
+        while ( lengt < max) { // && idx < TARGETS.size() ) {
             // Imag path suceded
             if (pos == translate(TARGET)){
                 TARGET = mapUtil.translatePosition(TARGETS.get(idx++));
                 System.out.println("Get Next Target:" + TARGET);
-                length += 10;
+                bonus += 5;
             }
 
             switch (go_to){
@@ -200,32 +227,49 @@ public static class ReverseIterating<T> implements Iterable<T> {
             // Kolla så att det är exakt tre val som kommer i List
             List<SnakeDirection> directions = move_to_target(TARGET, coord, go_to);
             ListIterator listIterator = directions.listIterator();
+
+            SnakeDirection chosenDirection = go_to;
             boolean inserted =false;
+            int cnt = 0;
+            int cntr = path_chooser(mapUtil, coord, chosenDirection);
             while (!inserted) {
-                if( !listIterator.hasNext() ){ print_path(path, mapUtil);return length; }
-                SnakeDirection chosenDirection = directions.remove(listIterator.nextIndex());
-                if (chosenDirection == SnakeDirection.LEFT && coord.x >= 0) {
-                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos - 1)) && !path.in_tree(pos - 1)) {
+                cnt++;
+                switch (cntr){
+                    case 0: chosenDirection=SnakeDirection.LEFT ;break;
+                    case 1: chosenDirection=SnakeDirection.UP   ;break;
+                    case 2: chosenDirection=SnakeDirection.RIGHT;break;
+                    case 3: chosenDirection=SnakeDirection.DOWN ;break;
+                    default:chosenDirection=SnakeDirection.LEFT ;break;
+                }
+                cntr++;
+                cntr = cntr % 4;
+                if( cnt > 4 ){ print_path(path, mapUtil);return lengt+bonus; }
+                if (chosenDirection == SnakeDirection.LEFT && coord.x > 0) {
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos - 1)) && !path.in_tree(pos - 1)
+                            && !heads.in_tree(pos - 1)) {
                         go_to = SnakeDirection.LEFT;inserted =true;
                     }
-                } else if (chosenDirection == SnakeDirection.RIGHT && coord.x <= 45) {
-                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path.in_tree(pos + 1)) {
+                } else if (chosenDirection == SnakeDirection.RIGHT && coord.x < 45) {
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 1)) && !path.in_tree(pos + 1)
+                            && !heads.in_tree(pos + 1)) {
                         go_to = SnakeDirection.RIGHT;inserted =true;
                     }
-                } else if (chosenDirection == SnakeDirection.UP && coord.y >= 0) {
-                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos - 46)) && !path.in_tree(pos - 46)) {
+                } else if (chosenDirection == SnakeDirection.UP && coord.y > 0) {
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos - 46)) && !path.in_tree(pos - 46)
+                            && !heads.in_tree(pos - 46)) {
                         go_to = SnakeDirection.UP;inserted =true;
                     }
-                } else if (chosenDirection == SnakeDirection.DOWN && coord.y <= 33){
-                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 46)) && !path.in_tree(pos + 46)) {
+                } else if (chosenDirection == SnakeDirection.DOWN && coord.y < 33){
+                    if (mapUtil.isTileAvailableForMovementTo(mapUtil.translatePosition(pos + 46)) && !path.in_tree(pos + 46)
+                            && !heads.in_tree(pos + 46)) {
                         go_to = SnakeDirection.DOWN;inserted =true;
                     }
                 }
             }
-            length++;
+            lengt++;
         }
         print_path(path, mapUtil);
-        return length;
+        return lengt+bonus;
     }
 
     @Override
@@ -244,7 +288,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
         System.out.println("SnakeHEAD == " + HEAD);
         System.out.println("SnakeTAIL == " + TAIL);
 
-
+        BinarySearchTree heads = new BinarySearchTree();
 
         for (SnakeInfo snakeInfo : mapUpdateEvent.getMap().getSnakeInfos()) {
             if ( snakeInfo.isAlive() && snakeInfo.getId() != getPlayerId() ) {
@@ -262,6 +306,15 @@ public static class ReverseIterating<T> implements Iterable<T> {
                         TARGET = mapUtil.translatePosition(it[snakeInfo.getLength() - 1]);
                         //System.out.println("TARGETS.addSnakeTail( " + TARGET);
                     }
+                    it = snakeInfo.getPositions();
+                    insert = it[0];
+                    if (insert != translate(HEAD)) {
+                        heads.insert(insert, insert);
+                        heads.insert(insert-1, insert-1);
+                        heads.insert(insert+1, insert+1);
+                        heads.insert(insert+46, insert+46);
+                        heads.insert(insert-46, insert-46);
+                    }
                 }
             }
         }
@@ -271,7 +324,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
             if (mapUtil.isTileAvailableForMovementTo(c)) {
                 //System.out.println("TARGETS.addFood     ( " + c);
                 int d = c.getManhattanDistanceTo(HEAD);
-                if ( d < distance ){
+                if ( d < 10 && d < distance ){
                     TARGETS.add(0, translate(c));
                     distance = d;
                 }
@@ -287,14 +340,18 @@ public static class ReverseIterating<T> implements Iterable<T> {
                 chosenDirection = direction;
             }
         }
-            int max = 0;
+
+            int max_length = 0;
             for (SnakeDirection tmp_dir : directions )
             {
-                int length = get_path_length(20, mapUtil, tmp_dir, TARGETS);
-                if (chosenDirection == SnakeDirection.DOWN || chosenDirection ==SnakeDirection.UP)
-                    length -= 5;
-                if ( length > max){
+                int length = get_path_length(15, mapUtil, tmp_dir, TARGETS, heads);
+                if (tmp_dir == SnakeDirection.RIGHT || tmp_dir ==SnakeDirection.LEFT){
+                    length = length + 2;
+                }
+                if ( length >= max_length){
                     chosenDirection = tmp_dir;
+                    max_length = length;
+                    System.out.println(chosenDirection + " == " +length);
                   //  if (length >= 20 ) break;
                 }
                 // Check time consumed
@@ -304,7 +361,7 @@ public static class ReverseIterating<T> implements Iterable<T> {
                     break;
                 }
             }
-        System.out.println("Moving to TARGET == " + TARGET );
+        System.out.println("Direction move to " + chosenDirection );
        // Register action here!
         registerMove(mapUpdateEvent.getGameTick(), chosenDirection);
         counter++;
